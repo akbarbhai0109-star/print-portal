@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Aadhaar Print Service</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; padding: 20px; }
+        .box { background: white; padding: 20px; border-radius: 10px; max-width: 400px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { color: #333; }
+        input[type="file"] { margin: 20px 0; }
+        .img-container { max-height: 300px; margin-bottom: 20px; display: none; }
+        img { max-width: 100%; }
+        button { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 5px; }
+        button.rotate { background: #007bff; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>Aadhaar Auto-Print Portal</h2>
+    <p>Apna Aadhaar Select Karein aur Crop Karein:</p>
+    
+    <input type="file" id="imageInput" accept="image/*">
+    
+    <div class="img-container">
+        <img id="image" src="" alt="Source Image">
+    </div>
+    
+    <button id="rotateBtn" class="rotate" style="display:none;">Ghumayein (Rotate)</button>
+    <button id="cropBtn" style="display:none;">Print Ke Liye Bhejein</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script>
+    const imageInput = document.getElementById('imageInput');
+    const image = document.getElementById('image');
+    const rotateBtn = document.getElementById('rotateBtn');
+    const cropBtn = document.getElementById('cropBtn');
+    const container = document.querySelector('.img-container');
+    let cropper;
+
+    imageInput.addEventListener('change', (e) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                image.src = event.target.result;
+                container.style.display = 'block';
+                rotateBtn.style.display = 'inline-block';
+                cropBtn.style.display = 'inline-block';
+                
+                if (cropper) cropper.destroy();
+                
+                // Aadhaar card ke ratio (1.6:1) mein box banega
+                cropper = new Cropper(image, {
+                    aspectRatio: 1.58,
+                    viewMode: 1,
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    rotateBtn.addEventListener('click', () => {
+        if (cropper) cropper.rotate(90);
+    });
+
+    cropBtn.addEventListener('click', () => {
+        if (cropper) {
+            const canvas = cropper.getCroppedCanvas({ width: 1000, height: 630 });
+            canvas.toBlob((blob) => {
+                // Yahan se file seedha download hogi ya server par jayegi
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Aadhaar_${Date.now()}.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                alert("Photo crop ho gayi hai! Ise AutoPrint folder mein dalein.");
+            }, 'image/jpeg');
+        }
+    });
+</script>
+</body>
+</html>
